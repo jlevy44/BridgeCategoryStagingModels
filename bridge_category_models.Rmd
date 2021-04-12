@@ -1008,3 +1008,37 @@ execute.simulation<-function(input.args,n.sim,start.idx=1){
 
 if.else<-function(expr,return.true,return.false){if (expr) {return(return.true)} else {return(return.false)}}
 ```
+
+# Real World Data Prep
+```{r}
+run.model.real.data<-function(prep.fn="mixture",
+                         var.name=c("X1","X2","X3"),
+                         csv.file="data.csv",
+                         scale.data=F,
+                         verbose=0,
+                         n.categories=5,
+                         hparams=list(                                                                             phi_a=3.,
+                                 phi_b=3.,
+                                 lambda_y_min=0.1,
+                                 lambda_alpha=1.5),
+                         control=list(adapt_delta=0.85,stepsize=0.01),
+                         iter=2000,
+                         seed=42,
+                         save_model_likelihood=F){
+  
+  data<-read.csv(csv.file)[,-1]
+  if (min(data$Y)==0){data$Y<-data$Y+1}
+  data<-prep[[prep.fn]](data$Y) # issue with Y here
+  data$type<-prep.fn
+  data.df<-as.data.frame(cbind(data$Y,data.new[,var.name]))
+  data.df[,-1]<-(apply(data.df[,-1],2,as.numeric))
+  colnames(data.df)[1]<-"Y"
+  if (scale.data) {data.df[,-1]<-scale(data.df[,-1])}
+  stan.data<-make_standata(Y~., data=data.df, family=cumulative(link = "probit"))
+  stan.data$nthres<-if.else(prep.fn=="expanded",2*(n.categories-1),n.categories-1)
+  stan.data$Y<-as.numeric(as.character(data.df$Y))
+  data.list<-list(sim.data=data,
+                  stan.data=stan.data)
+  return(run.model(data.list,verbose=verbose,iter=iter,seed=seed,additional.stan.hparams = hparams, save_model_likelihood=save_model_likelihood,control=control))
+}
+ ```
