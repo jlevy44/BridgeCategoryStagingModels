@@ -974,7 +974,7 @@ run.sim<-function(dgm.fn,
     if (return.data.only){return(data.list)}
     if (e.q.is.0 & prep.fn=="expanded"){
       data.list$stan.data$Y<-as.numeric(as.character(data.list$sim.data$Y))
-      data.list$stan.data$nthres<-8
+      data.list$stan.data$nthres<-2*n.categories-2
     }
     results<-run.model(data.list,
                        iter,
